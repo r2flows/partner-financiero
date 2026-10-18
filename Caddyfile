@@ -4,12 +4,23 @@
 }
 
 :{$PORT:8080} {
-	root * /srv
 	encode zstd gzip
 	header {
 		X-Content-Type-Options nosniff
 		Referrer-Policy strict-origin-when-cross-origin
 	}
-	try_files {path} /index.html
-	file_server
+
+	# Formulario "Evaluar mi caso": lo sirve chatterbox (AgentLoop), que es donde
+	# vive el filtro del bot. CHATTERBOX_URL = https://<dominio de AgentLoop>.
+	handle /solicitud* {
+		reverse_proxy {$CHATTERBOX_URL} {
+			header_up Host {upstream_hostport}
+		}
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
 }
